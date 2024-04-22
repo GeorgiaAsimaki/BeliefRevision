@@ -22,21 +22,20 @@ def cnf_to_clauses(cnf_formula,origin):
         subcl =[]
         for arg in cnf_expr.args:
             clause_literals = extract_literals(arg)
-            if origin=='base':
-                clauses.extend(clause_literals)  # Append literals directly to the clause
-            else:
-                subcl.extend(clause_literals)
-        if origin == 'statement':
-            clauses.append(subcl)
+            subcl.extend(clause_literals)
+        clauses.append(subcl)
     elif cnf_expr.func == And:  # If it's a conjunction (And)
         clause_literals = []
         for arg in cnf_expr.args:
-            clause_literals.append(extract_literals(arg))
+            if (arg.func == Or):
+                clause_literals.extend(cnf_to_clauses(arg, origin))
+            else:
+                clause_literals.append(extract_literals(arg))
         clauses.extend(clause_literals)  # Append all literals to a single clause
     else:  # If it's neither Or nor And, leave it as is
         clause_literals = extract_literals(cnf_expr)
         if clause_literals:  # Check if the list is not empty
-            if len(clause_literals)==1 and origin=='statement':
+            if len(clause_literals)==1:
                 clauses.append(clause_literals)
             else:
                 clauses.extend(clause_literals)  # Treat it as a single clause
@@ -98,79 +97,5 @@ def apply_demorgan(expr):
     else:
         return expr
 
-#for testing purposes
-def check_entailment(statement):
-    # 1. Negate the statement and convert it to CNF form
-    #print(statement)
-    negated_statement = apply_demorgan(Not(statement))
-    #print("Negated statement:", negated_statement)
-    s = to_cnf(negated_statement)
-    #print("CNF form of negated statement:", s)
 
-
-    # 2. Initialize a base set with beliefs
-    base = {"D | R", "B"}  # Example beliefs as SymPy expressions
-
-    # 3. Extract clauses from the base
-    clauses = []
-    #print("base",base)
-    for b in base:
-        bc = cnf_to_clauses(b,'base')
-        #print("bc",bc)
-        clauses.append(bc)
-
-    # Add this line before s_clause assignment
-    #print("Negated statement CNF form:", s)
-    # 4. Add the negated statement clauses to the clauses list
-    s_clause = cnf_to_clauses(s,'statement')
-    #print(s_clause)
-
-
-    # Add this line after s_clause assignment
-    #print("Negated statement clauses:", s_clause)
-
-    clauses.extend(s_clause)
-
-
-    #print("cl",clauses)
-    #print(len(clauses))
-
-    while True:
-        n = len(clauses)
-        #print("start")
-        change = False
-        entails = False
-
-        set = []
-        for i in range(n):
-            for j in range(i + 1, n):
-                set.append([clauses[i], clauses[j]])
-
-        #print(set)
-
-        for a,b in set:
-            #print("a.b : ",a,b)
-            res,found = resolution(a, b)
-            if(found):
-                change = True
-                if res==[[]]:
-                    entails =True
-                    print("entails")
-                    break
-                else:
-                    #print('in')
-                    clauses.remove(a)
-                    clauses.remove(b)
-                    clauses.extend(res)
-                    for s in set:
-                        if (s[0]==a or s[0]==b or s[1]==a or s[1]==b):
-                            set.remove(s)
-
-        if not change or entails:
-            if not entails:
-                print("Not entails")
-            break
-
-
-#check_entailment("A|B|C&D")
 

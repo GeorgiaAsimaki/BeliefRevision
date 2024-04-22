@@ -5,13 +5,17 @@ from utils import cnf_to_clauses,resolution,apply_demorgan
 
 class BeliefBase:
     def __init__(self):
-        self.beliefs = []
+        #self.beliefs = {"a", "d|b"} # it should be cnf formed
+        self.beliefs = set()
 
     def display(self):
         print(self.beliefs)
 
     def expansion(self, statement):
-        self.beliefs.extend(statement)
+        cnf = to_cnf(statement)
+        cnf = str(cnf)
+
+        self.beliefs.add(cnf)
 
     def contraction(self, statement):
         if statement in self.beliefs:
@@ -35,7 +39,7 @@ class BeliefBase:
         for b in base:
             bc = cnf_to_clauses(b, 'base')
             # print("bc",bc)
-            clauses.append(bc)
+            clauses.extend(bc)
 
         # Add this line before s_clause assignment
         # print("Negated statement CNF form:", s)
@@ -72,11 +76,12 @@ class BeliefBase:
                     if res == [[]]:
                         entails = True
                         print("entails")
+                        return True
                         break
                     else:
                         # print('in')
-                        clauses.remove(a)
-                        clauses.remove(b)
+                        #clauses.remove(a)
+                        #clauses.remove(b)
                         clauses.extend(res)
                         for s in set:
                             if (s[0] == a or s[0] == b or s[1] == a or s[1] == b):
@@ -85,6 +90,7 @@ class BeliefBase:
             if not change or entails:
                 if not entails:
                     print("Not entails")
+                    return False
                 break
 
 
