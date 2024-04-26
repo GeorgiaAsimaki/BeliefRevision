@@ -9,7 +9,7 @@ class BeliefBase:
         self.beliefs = set()
 
     def display(self):
-        print(self.beliefs)
+        return self.beliefs
 
     def expansion(self, statement):
         cnf = to_cnf(statement)
