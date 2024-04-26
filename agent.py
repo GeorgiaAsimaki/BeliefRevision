@@ -1,8 +1,6 @@
 import  beliefRevision
 from beliefRevision import BeliefBase
 
-from utils import expansion
-
 from sympy.logic.boolalg import to_cnf
 
 
