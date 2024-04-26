@@ -67,6 +67,7 @@ def resolution(a,b):
                 result =list(set(ab))
                 res.append(result)
                 found = True
+
     return res,found #True means I couldn't remove something
 
 def apply_demorgan(expr):

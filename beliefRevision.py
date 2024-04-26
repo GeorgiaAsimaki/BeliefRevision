@@ -9,13 +9,14 @@ class BeliefBase:
         self.beliefs = set()
 
     def display(self):
-        print(self.beliefs)
+        return self.beliefs
 
     def expansion(self, statement):
         cnf = to_cnf(statement)
         cnf = str(cnf)
 
         self.beliefs.add(cnf)
+
 
     def contraction(self, statement):
         if statement in self.beliefs:
@@ -54,6 +55,10 @@ class BeliefBase:
 
         # print("cl",clauses)
         # print(len(clauses))
+        resolved = []
+        origin = []
+        for i in range(len(clauses)):
+            origin.append([])
 
         while True:
             n = len(clauses)
@@ -64,15 +69,23 @@ class BeliefBase:
             set = []
             for i in range(n):
                 for j in range(i + 1, n):
-                    set.append([clauses[i], clauses[j]])
+                    s = [clauses[i], clauses[j]]
+                    if(s not in resolved):
+                        if((clauses[i] not in origin[j]) and (clauses[j] not in origin[i])):
+                            set.append(s)
 
             # print(set)
 
-            for a, b in set:
+
+
+            for s in set:
+                a=s[0]
+                b=s[1]
                 # print("a.b : ",a,b)
                 res, found = resolution(a, b)
                 if (found):
                     change = True
+
                     if res == [[]]:
                         entails = True
                         print("entails")
@@ -82,12 +95,27 @@ class BeliefBase:
                         # print('in')
                         #clauses.remove(a)
                         #clauses.remove(b)
-                        clauses.extend(res)
+
+                        resolved.append(s)
+                        '''
                         for s in set:
                             if (s[0] == a or s[0] == b or s[1] == a or s[1] == b):
                                 set.remove(s)
+                        '''
+                        clauses.extend(res)
+                        for i in res:
+                            origina = origin[clauses.index(a)]
+                            originb = origin[clauses.index(b)]
+                            origin.append([a, b, origina, originb])
+                        '''
+                        if a in clauses:
+                            clauses.remove(a)
+                        if b in clauses:
+                            clauses.remove(b)
+                        '''
 
-            if not change or entails:
+
+            if not change or entails or len(set)==0:
                 if not entails:
                     print("Not entails")
                     return False
