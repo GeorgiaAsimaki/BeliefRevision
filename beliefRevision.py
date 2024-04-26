@@ -23,96 +23,70 @@ class BeliefBase:
             self.beliefs.remove(statement)
 
     def check_entailment(self,statement):
-        # 1. Negate the statement and convert it to CNF form
-        # print(statement)
-        negated_statement = apply_demorgan(Not(statement))
-        # print("Negated statement:", negated_statement)
-        s = to_cnf(negated_statement)
-        # print("CNF form of negated statement:", s)
+        # Negate the statement and convert it to CNF form
 
-        # 2. Initialize a base set with beliefs
-        # base = {"D | R", "B"}  # Example beliefs as SymPy expressions
+        negated_statement = apply_demorgan(Not(statement))
+        s = to_cnf(negated_statement)
+
         base = self.beliefs
 
-        # 3. Extract clauses from the base
+        # Extract clauses from the base
         clauses = []
-        # print("base",base)
+
         for b in base:
-            bc = cnf_to_clauses(b, 'base')
-            # print("bc",bc)
+            bc = cnf_to_clauses(b, 'base') # translate beliefs to a list of specific form
             clauses.extend(bc)
 
-        # Add this line before s_clause assignment
-        # print("Negated statement CNF form:", s)
-        # 4. Add the negated statement clauses to the clauses list
+        # Add the negated statement clauses to the clauses list
         s_clause = cnf_to_clauses(s, 'statement')
-        # print(s_clause)
-
-        # Add this line after s_clause assignment
-        # print("Negated statement clauses:", s_clause)
 
         clauses.extend(s_clause)
 
-        # print("cl",clauses)
-        # print(len(clauses))
+        #this list stores the pairs that have already been resolved
         resolved = []
+        #this list stores the origin of the resolvement, i.e. the pair that resolved and produced clause i is in origin[i]
         origin = []
         for i in range(len(clauses)):
-            origin.append([])
+            origin.append([]) #append empty lists as origins for the initial clauses
 
         while True:
             n = len(clauses)
-            # print("start")
+
             change = False
             entails = False
 
+            #the set that has all the pairs that can be resolved
             set = []
             for i in range(n):
                 for j in range(i + 1, n):
                     s = [clauses[i], clauses[j]]
-                    if(s not in resolved):
+                    if(s not in resolved): #if it hasn't already been resolved
                         if((clauses[i] not in origin[j]) and (clauses[j] not in origin[i])):
+                            #here it checks that one of the parts of the pair has been resolved from the other. if so, it shouldn't create a new pair to add to the set
                             set.append(s)
-
-            # print(set)
-
-
-
+            #go through the pairs of the set and check their resolvements
             for s in set:
                 a=s[0]
                 b=s[1]
-                # print("a.b : ",a,b)
                 res, found = resolution(a, b)
+                #res is the resolvement
+                #found is a flag that is True when a resolvement has been found
                 if (found):
                     change = True
-
                     if res == [[]]:
+                        #if resolvement is empty
                         entails = True
                         print("entails")
                         return True
                         break
                     else:
-                        # print('in')
-                        #clauses.remove(a)
-                        #clauses.remove(b)
-
                         resolved.append(s)
-                        '''
-                        for s in set:
-                            if (s[0] == a or s[0] == b or s[1] == a or s[1] == b):
-                                set.remove(s)
-                        '''
+
                         clauses.extend(res)
                         for i in res:
                             origina = origin[clauses.index(a)]
                             originb = origin[clauses.index(b)]
                             origin.append([a, b, origina, originb])
-                        '''
-                        if a in clauses:
-                            clauses.remove(a)
-                        if b in clauses:
-                            clauses.remove(b)
-                        '''
 
 
             if not change or entails or len(set)==0:

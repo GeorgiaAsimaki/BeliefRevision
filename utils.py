@@ -12,6 +12,11 @@ def extract_literals(expr):
 
 
 def cnf_to_clauses(cnf_formula,origin):
+    '''
+    The functionality of this function is to turn a formula that is in this form e.g a^b|c to this form [[a],[b,c]]
+    so that the elemnts of the list are the parts of the conjuction and each of them is a list of the literals that appear at the disjunctions (since it is in cnf form).
+    '''
+
     cnf_expr = to_cnf(cnf_formula)
     clauses = []
 
@@ -44,16 +49,11 @@ def cnf_to_clauses(cnf_formula,origin):
 
 
 
-'''
-# Example usage:
-cnf_formula = "A & ~B | C"
-clauses = cnf_to_clauses(cnf_formula,'statement')
-print("Clauses:")
-for clause in clauses:
-    print(clause)
-'''
-
 def resolution(a,b):
+    '''
+    This function finds the resolvements of a pair a,b
+    and returns found = True if there is a resolvement else found=False and the resolvement in res
+    '''
     res = []
     found = False
     for la in a:
@@ -75,25 +75,20 @@ def apply_demorgan(expr):
         arg = expr.args[0]
         if isinstance(arg, Or):  # Apply De Morgan's law for negated disjunction
             result = And(*[Not(sub_expr) for sub_expr in arg.args])
-            #print("Applied De Morgan's law for negated disjunction:", result)
             return result
         elif isinstance(arg, And):  # Apply De Morgan's law for negated conjunction
             result = Or(*[Not(sub_expr) for sub_expr in arg.args])
-            #print("Applied De Morgan's law for negated conjunction:", result)
             return result
         elif isinstance(arg, Not):  # Remove double negation
             result = arg.args[0]
-            #print("Removed double negation:", result)
             return result
         elif isinstance(arg, Symbol):  # If it's a symbol, return the negation
             return Not(arg)
     elif isinstance(expr, Or):  # Apply De Morgan's law for disjunction
         result = And(*[apply_demorgan(sub_expr) for sub_expr in expr.args])
-        #print("Applied De Morgan's law for disjunction:", result)
         return result
     elif isinstance(expr, And):  # Apply De Morgan's law for conjunction
         result = Or(*[apply_demorgan(sub_expr) for sub_expr in expr.args])
-        #print("Applied De Morgan's law for conjunction:", result)
         return result
     else:
         return expr
