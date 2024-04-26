@@ -7,16 +7,35 @@ class BeliefBase:
     def __init__(self):
         #self.beliefs = {"a", "d|b"} # it should be cnf formed
         self.beliefs = set()
+        self.priorities = []
+        self.sorted = set()
+
 
     def display(self):
-        return self.beliefs
+        for i in range(len(self.beliefs)):
+            return self.beliefs
 
-    def expansion(self, statement):
+    def expansion(self, statement,order):
         cnf = to_cnf(statement)
         cnf = str(cnf)
 
         self.beliefs.add(cnf)
+        self.priorities.extend([order])
+        print(self.priorities)
 
+    def sort(self):
+        # Create a list of tuples (belief, priority)
+        beliefs_with_priorities = list(zip(self.beliefs, self.priorities))
+
+        # Sort the list of tuples based on priority
+        beliefs_with_priorities.sort(key=lambda x: x[1])
+
+        # Update beliefs with sorted list of beliefs
+        self.sorted=set()
+        for i in beliefs_with_priorities:
+            self.sorted.add(i[0])
+
+        return self.sorted
 
     def contraction(self, statement):
         if statement in self.beliefs:
