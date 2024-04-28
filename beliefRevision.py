@@ -1,7 +1,9 @@
 from sympy.logic.boolalg import to_cnf, Not, And, Or
 from sympy import sympify
+from itertools import combinations
 
 from utils import cnf_to_clauses,resolution,apply_demorgan
+
 
 class BeliefBase:
     def __init__(self):
@@ -9,11 +11,21 @@ class BeliefBase:
         self.beliefs = set()
         self.sorted = set()
 
+    def display(self):
+        beliefs_str = "\n".join(str(belief) for belief in self.beliefs)
+        return beliefs_str
+
     def get_beliefs(self):
         """
         Get beliefs from BeliefBase.
         """
         return {belief.belief for belief in self.beliefs}
+
+    def find_belief(self, belief_str):
+        for belief_obj in self.beliefs:
+            if belief_obj.belief == belief_str:
+                return belief_obj
+        return None
 
     def get_beliefs_with_priorities(self):
         """
@@ -22,20 +34,53 @@ class BeliefBase:
         beliefs_with_priorities = [(belief.belief, belief.priority) for belief in self.beliefs]
         return beliefs_with_priorities
 
-    def display(self):
-        beliefs_str = "\n".join(str(belief) for belief in self.beliefs)
-        return beliefs_str
+    def sort(self):
+        # Create a list of tuples (belief, priority)
+        beliefs_with_priorities = self.get_beliefs_with_priorities()
+
+        # Sort the list of tuples based on priority
+        beliefs_with_priorities.sort(key=lambda x: x[1])
+
+        # Update beliefs with sorted list of beliefs
+        self.sorted = beliefs_with_priorities
+
+
+        return self.sorted
+
+    def group_beliefs_by_priority(self):
+        """
+        Group beliefs by priority.
+        returns a list with a list of beliefs that have the priority = index
+        """
+        grouped_beliefs = {}
+        for belief, priority in self.sorted:
+            if priority not in grouped_beliefs:
+                grouped_beliefs[priority] = []
+            grouped_beliefs[priority].append(belief)
+        return grouped_beliefs
+
+
+    def get_combinations(self,grouped_beliefs,order):
+        '''
+        returns a list of all possible combinations with the correct order to test for entailment
+        '''
+        comb = []
+        for i in range(len(grouped_beliefs),order+1):
+            comb.extend(grouped_beliefs[i])
+            for num in range(2,len(grouped_beliefs[i])+1):
+                c = combinations(grouped_beliefs[i],num)
+                comb.extend(c)
 
     def checkOrder(self,b):
         self.sort()
+        base = BeliefBase()
         #check if the order is more than the least important belief
         if b.priority<self.sorted[0][1]:
             return False
         else:
             #check if the base that includes beliefs with higher order entails the negation of the statement
                 #if yes we cannot continue, otherwise we can
-            base = BeliefBase()
-            base.beliefs =self.beliefs
+            base.beliefs =self.beliefs.copy()
             base.sort()
             sorted=base.sorted
 
@@ -51,40 +96,89 @@ class BeliefBase:
             else:
                 return True
 
+    def find_combinations(self,order):
+        comb = []  # all the combinations
+        self.sort()
+        beliefs = [item[0] for item in self.sorted if item[1] <= order]
+        priority = [item[1] for item in self.sorted if item[1] <= order]
+
+
+        comb_priority = []
+        comb.extend(beliefs)
+        for num in range(2, len(beliefs) + 1):
+            c = combinations(beliefs, num)
+            comb.extend(c)
+
+        for c in comb:  # for each combination
+            max_p = 0  # initialize priority for combination
+            sum_p = 0
+            if isinstance(c, tuple):  # Check if c is a tuple
+                for l in range(len(c)):  # for each element in the tuple
+                    place = beliefs.index(c[l])
+                    p = priority[place]
+                    if p > max_p:
+                        max_p = p
+                    sum_p += p
+            else:  # If c is not a tuple, treat it as a single belief
+                place = beliefs.index(c)
+                p = priority[place]
+                max_p = p
+                sum_p = p
+            comb_priority.append((max_p, sum_p))
+
+        zipped_comb = list(zip(comb, comb_priority))
+        zipped_comb = list(set(zipped_comb))
+        zipped_comb.sort(key=lambda x: x[1])
+        sorted_comb = [item[0] for item in zipped_comb]
+
+        return sorted_comb
 
     def revision(self,belief):
         # 1.check entailment for degrees>=order
             # if the base that includes degrees more or equal to the order that the statement has then we can continue
             # otherwise it cannot be added
         p = self.checkOrder(belief)
+
         if p:
             # check for the maximal base subset that doesn't entail the negation of the statement
+            comb = self.find_combinations(belief.priority)
+            #these are the different combinations that I can try in order to see what I need to remove
+            for c in comb:
+                #Use a test belief base to try removing the different combinations
+                test_base = BeliefBase()
+                test_base.beliefs = self.beliefs.copy()
+                test_base.sort()
+                if isinstance(c, tuple):  # Check if c is a tuple
+                    for l in range(len(c)):  # for each element in the tuple
+                        b = self.find_belief(c[l])
+                        test_base.contraction(b)
+                else:  # If c is not a tuple, treat it as a single belief
+                    b = self.find_belief(c)
+                    test_base.contraction(b)
 
+                entails = test_base.check_entailment(Not(sympify(belief.belief)))
+                # if entails=True then I cannot add it
+                if not entails:
+                    return True,c
+            return False, []
         else:
             print('Cannot be added due to low priority')
-            return
+            return False,[]
 
-
-    def sort(self):
-        # Create a list of tuples (belief, priority)
-        beliefs_with_priorities = self.get_beliefs_with_priorities()
-
-        # Sort the list of tuples based on priority
-        beliefs_with_priorities.sort(key=lambda x: x[1])
-
-        # Update beliefs with sorted list of beliefs
-        self.sorted = beliefs_with_priorities
-
-
-        return self.sorted
 
     def expansion(self, belief):
-        self.beliefs.add(belief)
+        old_belief = self.find_belief(belief.belief)
+        if old_belief:
+            self.contraction(old_belief)
+            self.beliefs.add(belief)
+        else:
+            self.beliefs.add(belief)
+        #####!!!!! an balw me allo priority na to allaksw
 
 
-    def contraction(self, statement):
-        if statement in self.beliefs:
-            self.beliefs.remove(statement)
+    def contraction(self, belief):
+        if belief in self.beliefs:
+            self.beliefs.remove(belief)
 
     def check_entailment(self,statement):
         # Negate the statement and convert it to CNF form
