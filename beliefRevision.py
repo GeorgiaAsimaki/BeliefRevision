@@ -7,35 +7,80 @@ class BeliefBase:
     def __init__(self):
         #self.beliefs = {"a", "d|b"} # it should be cnf formed
         self.beliefs = set()
-        self.priorities = []
         self.sorted = set()
 
+    def get_beliefs(self):
+        """
+        Get beliefs from BeliefBase.
+        """
+        return {belief.belief for belief in self.beliefs}
+
+    def get_beliefs_with_priorities(self):
+        """
+        Get beliefs with priorities from BeliefBase.
+        """
+        beliefs_with_priorities = [(belief.belief, belief.priority) for belief in self.beliefs]
+        return beliefs_with_priorities
 
     def display(self):
-        for i in range(len(self.beliefs)):
-            return self.beliefs
+        beliefs_str = "\n".join(str(belief) for belief in self.beliefs)
+        return beliefs_str
 
-    def expansion(self, statement,order):
-        cnf = to_cnf(statement)
-        cnf = str(cnf)
+    def checkOrder(self,b):
+        self.sort()
+        #check if the order is more than the least important belief
+        if b.priority<self.sorted[0][1]:
+            return False
+        else:
+            #check if the base that includes beliefs with higher order entails the negation of the statement
+                #if yes we cannot continue, otherwise we can
+            base = BeliefBase()
+            base.beliefs =self.beliefs
+            base.sort()
+            sorted=base.sorted
 
-        self.beliefs.add(cnf)
-        self.priorities.extend([order])
-        print(self.priorities)
+            beliefs_to_remove = [belief for belief in sorted if belief[1] <= b.priority]
+            for belief_tuple in beliefs_to_remove:
+                belief_to_remove = next(belief for belief in base.beliefs if belief.belief == belief_tuple[0])
+                base.beliefs.remove(belief_to_remove)
+
+            entails = base.check_entailment(Not(sympify(b.belief)))
+            # if entails=True then I cannot add it
+            if entails:
+                return False
+            else:
+                return True
+
+
+    def revision(self,belief):
+        # 1.check entailment for degrees>=order
+            # if the base that includes degrees more or equal to the order that the statement has then we can continue
+            # otherwise it cannot be added
+        p = self.checkOrder(belief)
+        if p:
+            # check for the maximal base subset that doesn't entail the negation of the statement
+
+        else:
+            print('Cannot be added due to low priority')
+            return
+
 
     def sort(self):
         # Create a list of tuples (belief, priority)
-        beliefs_with_priorities = list(zip(self.beliefs, self.priorities))
+        beliefs_with_priorities = self.get_beliefs_with_priorities()
 
         # Sort the list of tuples based on priority
         beliefs_with_priorities.sort(key=lambda x: x[1])
 
         # Update beliefs with sorted list of beliefs
-        self.sorted=set()
-        for i in beliefs_with_priorities:
-            self.sorted.add(i[0])
+        self.sorted = beliefs_with_priorities
+
 
         return self.sorted
+
+    def expansion(self, belief):
+        self.beliefs.add(belief)
+
 
     def contraction(self, statement):
         if statement in self.beliefs:
@@ -47,7 +92,7 @@ class BeliefBase:
         negated_statement = apply_demorgan(Not(statement))
         s = to_cnf(negated_statement)
 
-        base = self.beliefs
+        base = self.get_beliefs()
 
         # Extract clauses from the base
         clauses = []
@@ -114,8 +159,13 @@ class BeliefBase:
                     return False
                 break
 
+class Belief:
+    def __init__(self):
+        # self.beliefs = {"a", "d|b"} # it should be cnf formed
+        self.belief = ''
+        self.priority = 0
 
+    def __str__(self):
+        return f"Belief: {self.belief} with Priority: {self.priority}"
 
-    
-    
 
