@@ -173,7 +173,7 @@ class BeliefBase:
             self.beliefs.add(belief)
         else:
             self.beliefs.add(belief)
-        #####!!!!! an balw me allo priority na to allaksw
+       
 
 
     def contraction(self, belief):
