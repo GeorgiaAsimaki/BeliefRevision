@@ -39,7 +39,7 @@ def make_belief(statement,order):
 
 if __name__ == '__main__':
     base = BeliefBase()
-    '''
+    
     #Belief 1
     print("my Belief base is: ", base.display())
     print("Input the statement to be revisioned")
@@ -48,50 +48,5 @@ if __name__ == '__main__':
     p = input()
     statement = statement.lower()
     belief1 = make_belief(statement,int(p))
-    base.expansion(belief1)
-    '''
-    belief1 = make_belief('~a',1)
-    base.expansion(belief1)
-    belief1 = make_belief('a|b', 3)
-    base.expansion(belief1)
-    belief1 = make_belief('a&b', 4)
-    base.expansion(belief1)
-    belief1 = make_belief('~a', 4)
-    base.expansion(belief1)
-
-    #Belief 2
+    checkForRevision(base,belief1)
     print("my Belief base is: ", base.display())
-    print("Input the statement to be revisioned")
-    statement2 = input()
-    statement2 = statement2.lower()
-    print("Input the priority (integer from 0-10)")
-    p2 = input()
-    belief2 = make_belief(statement2, int(p2))
-    #base.expansion(belief2)
-    print("my Belief base is: ", base.display())
-    #print(base.check_entailment(statement2))
-
-    print("sorted: ", base.sort())
-    checkForRevision(base, belief2)
-    print("my Belief base is: ", base.display())
-
-    '''
-    # Belief 3
-    print("my Belief base is: ", base.display())
-    print("Input the statement to be revisioned")
-    statement3 = input()
-    statement3 = statement3.lower()
-    print("Input the priority (integer from 0-10)")
-    p3 = input()
-    #base.expansion(statement3, int(p3))
-    checkForRevision(base, statement3, int(p3))
-
-    # print(statement)
-    print("my Belief base is: ", base.display())
-    print("sorted: ", base.sort())
-    #print(base.check_entailment(Not(sympify(statement2))))
-    #print(base.check_entailment(statement2))
-
-    #print(type(statement))
-    #print(to_cnf(belief))
-'''
