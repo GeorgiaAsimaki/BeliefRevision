@@ -39,7 +39,8 @@ def make_belief(statement,order):
 
 if __name__ == '__main__':
     base = BeliefBase()
-    
+    #example usage
+
     #Belief 1
     print("my Belief base is: ", base.display())
     print("Input the statement to be revisioned")
@@ -48,5 +49,6 @@ if __name__ == '__main__':
     p = input()
     statement = statement.lower()
     belief1 = make_belief(statement,int(p))
-    checkForRevision(base,belief1)
+    base.expansion(belief1)
+    checkForRevision(base, belief1)
     print("my Belief base is: ", base.display())

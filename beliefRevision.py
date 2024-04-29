@@ -173,7 +173,7 @@ class BeliefBase:
             self.beliefs.add(belief)
         else:
             self.beliefs.add(belief)
-       
+
 
 
     def contraction(self, belief):
